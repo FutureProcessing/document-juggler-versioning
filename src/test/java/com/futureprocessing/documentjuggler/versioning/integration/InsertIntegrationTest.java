@@ -17,7 +17,7 @@ public class InsertIntegrationTest extends BaseIntegrationTest {
 
     @BeforeClass
     public static void init() throws Exception {
-        movieRepository = new MovieRepository();
+        movieRepository = new MovieRepository(db());
         collection = db().getCollection(Movie.COLLECTION);
     }
 
@@ -32,14 +32,11 @@ public class InsertIntegrationTest extends BaseIntegrationTest {
         //then
         BasicDBObject found = (BasicDBObject) collection.findOne();
 
-        assertThat(found.getString(DOC_ID)).isEqualTo(movieId);
+        assertThat(found.getObjectId(DOC_ID).toHexString()).isEqualTo(movieId);
         assertThat(found.get(VERSION)).isEqualTo(1);
         assertThat(found.getDate(DATE)).isNotNull();
-        assertThat(found.get(CONTENT)).isNotNull();
 
-        BasicDBObject movie = (BasicDBObject) found.get(CONTENT);
-        BasicDBObject expectedContent = new BasicDBObject(Movie.TITLE, "Star Wars");
-        assertThat(movie).isEqualTo(expectedContent);
+        assertThat(found.getString(Movie.TITLE)).isEqualTo("Star Wars");
     }
 
 }

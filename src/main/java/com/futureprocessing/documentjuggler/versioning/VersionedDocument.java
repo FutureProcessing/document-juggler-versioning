@@ -5,12 +5,11 @@ import com.futureprocessing.documentjuggler.annotation.Id;
 
 import java.util.Date;
 
-public interface VersionedDocument<MODEL> {
+public interface VersionedDocument {
 
-    public static final String DOC_ID = "docId";
-    public static final String VERSION = "v";
-    public static final String DATE = "date";
-    public static final String CONTENT = "content";
+    public static final String DOC_ID = "_docId";
+    public static final String VERSION = "_v";
+    public static final String DATE = "_date";
 
     @Id
     String getId();
@@ -18,24 +17,11 @@ public interface VersionedDocument<MODEL> {
     @DbField(DOC_ID)
     String getDocId();
 
-    @DbField(DOC_ID)
-    VersionedDocument<MODEL> withDocId(String docId);
-
     @DbField(VERSION)
     int getVersion();
 
-    @DbField(VERSION)
-    VersionedDocument<MODEL> withVersion(int version);
 
     @DbField(DATE)
     Date getDate();
 
-    @DbField(DATE)
-    VersionedDocument<MODEL> withDate(Date date);
-
-    @DbField(CONTENT)
-    MODEL getContent();
-
-    @DbField(CONTENT)
-    VersionedDocument<MODEL> withContent(MODEL content);
 }

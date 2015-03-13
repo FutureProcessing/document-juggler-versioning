@@ -1,27 +1,31 @@
 package com.futureprocessing.documentjuggler.versioning;
 
-import com.futureprocessing.documentjuggler.BaseRepository;
 import com.futureprocessing.documentjuggler.Repository;
-import com.futureprocessing.documentjuggler.insert.InsertProxy;
-import com.futureprocessing.documentjuggler.insert.InserterConsumer;
-import com.futureprocessing.documentjuggler.insert.InserterMapper;
+import com.futureprocessing.documentjuggler.insert.InsertConsumer;
+import com.futureprocessing.documentjuggler.insert.InsertProcessor;
 import com.futureprocessing.documentjuggler.query.QueriedDocuments;
-import com.futureprocessing.documentjuggler.query.QuerierConsumer;
+import com.futureprocessing.documentjuggler.query.QueryConsumer;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
+import org.bson.types.ObjectId;
 
-public class VersioningRepository<MODEL> implements Repository<MODEL> {
+import java.time.DateTimeException;
+import java.util.Date;
 
-    private BaseRepository<VersionedDocument> repository;
+public class VersioningRepository<MODEL extends VersionedDocument> implements Repository<MODEL> {
+
+    private final DBCollection dbCollection;
+    private final InsertProcessor<MODEL> insertProcessor;
 
     public VersioningRepository(DBCollection dbCollection, Class<MODEL> modelClass) {
-        repository = new BaseRepository<VersionedDocument>(dbCollection, VersionedDocument.class);
+        this.dbCollection = dbCollection;
+        insertProcessor = new InsertProcessor<>(modelClass);
     }
 
     @Override
-    public QueriedDocuments<MODEL> find(QuerierConsumer<MODEL> querierConsumer) {
-        return repository.find(querierConsumer);
+    public QueriedDocuments<MODEL> find(QueryConsumer<MODEL> consumer) {
+        return null;
     }
 
     @Override
@@ -30,15 +34,16 @@ public class VersioningRepository<MODEL> implements Repository<MODEL> {
     }
 
     @Override
-    public String insert(InserterConsumer<MODEL> inserterConsumer) {
-        Object inserter = InsertProxy.create(this.inserterOperator.getRootClass(), ((InserterMapper) this.inserterOperator.getMapper()).get());
-        inserterConsumer.accept(inserter);
-        BasicDBObject document = InsertProxy.extract(inserter).getDocument();
+    public String insert(InsertConsumer<MODEL> consumer) {
+        BasicDBObject document = insertProcessor.process(consumer);
 
+        ObjectId docId = new ObjectId();
 
+        document.put(VersionedDocument.DOC_ID, docId);
+        document.put(VersionedDocument.VERSION, 1);
+        document.put(VersionedDocument.DATE, new Date());
 
-
-        this.dbCollection.insert(new DBObject[]{document});
-        return document.getObjectId("_id").toHexString();
+        dbCollection.insert(document);
+        return docId.toHexString();
     }
 }
