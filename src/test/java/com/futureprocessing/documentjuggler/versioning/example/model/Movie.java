@@ -1,10 +1,9 @@
 package com.futureprocessing.documentjuggler.versioning.example.model;
 
 import com.futureprocessing.documentjuggler.annotation.DbField;
-import com.futureprocessing.documentjuggler.annotation.Id;
 import com.futureprocessing.documentjuggler.versioning.VersionedDocument;
 
-public interface Movie extends VersionedDocument{
+public interface Movie extends VersionedDocument<Movie> {
 
     public static final String COLLECTION = "Movies";
     public static final String TITLE = "title";

@@ -28,7 +28,6 @@ public class InsertIntegrationTest extends BaseIntegrationTest {
         //when
         String movieId = movieRepository.insert(movie -> movie.withTitle("Star Wars"));
 
-
         //then
         BasicDBObject found = (BasicDBObject) collection.findOne();
 
@@ -38,5 +37,21 @@ public class InsertIntegrationTest extends BaseIntegrationTest {
 
         assertThat(found.getString(Movie.TITLE)).isEqualTo("Star Wars");
     }
+
+    @Test
+    public void shouldFindDocumentWithDocId() {
+        //given
+        String title = "Pocahontas";
+        String starWarsId = movieRepository.insert(movie -> movie.withTitle("Star Wars"));
+        String pocahontasId = movieRepository.insert(movie -> movie.withTitle(title));
+
+        //when
+        Movie pocahontas = movieRepository.find(movie -> movie.withId(pocahontasId)).first();
+
+        //then
+        assertThat(pocahontas.getId()).isEqualTo(pocahontasId);
+        assertThat(pocahontas.getTitle()).isEqualTo(title);
+    }
+
 
 }

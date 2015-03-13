@@ -1,27 +1,27 @@
 package com.futureprocessing.documentjuggler.versioning;
 
 import com.futureprocessing.documentjuggler.annotation.DbField;
-import com.futureprocessing.documentjuggler.annotation.Id;
+import com.futureprocessing.documentjuggler.annotation.ObjectId;
 
 import java.util.Date;
 
-public interface VersionedDocument {
+public interface VersionedDocument<MODEL extends VersionedDocument> {
 
-    public static final String DOC_ID = "_docId";
-    public static final String VERSION = "_v";
-    public static final String DATE = "_date";
+    static final String DOC_ID = "_docId";
+    static final String VERSION = "_v";
+    static final String DATE = "_date";
 
-    @Id
+    @ObjectId
+    @DbField(DOC_ID)
     String getId();
 
+    @ObjectId
     @DbField(DOC_ID)
-    String getDocId();
+    MODEL withId(String id);
 
     @DbField(VERSION)
     int getVersion();
 
-
     @DbField(DATE)
     Date getDate();
-
 }
