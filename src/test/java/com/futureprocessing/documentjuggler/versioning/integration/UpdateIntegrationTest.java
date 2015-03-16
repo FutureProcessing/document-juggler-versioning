@@ -2,7 +2,7 @@ package com.futureprocessing.documentjuggler.versioning.integration;
 
 import com.futureprocessing.documentjuggler.BaseRepository;
 import com.futureprocessing.documentjuggler.Repository;
-import com.futureprocessing.documentjuggler.query.QueriedDocuments;
+import com.futureprocessing.documentjuggler.update.UpdateResult;
 import com.futureprocessing.documentjuggler.versioning.example.MovieRepository;
 import com.futureprocessing.documentjuggler.versioning.example.model.Movie;
 import com.mongodb.BasicDBObject;
@@ -12,6 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static com.futureprocessing.documentjuggler.versioning.VersionedDocument.DOC_ID;
+import static com.futureprocessing.documentjuggler.versioning.VersionedDocument.PENDING_ARCHIVE;
 import static com.futureprocessing.documentjuggler.versioning.VersionedDocument.VERSION;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,8 +39,7 @@ public class UpdateIntegrationTest extends BaseIntegrationTest {
         String movieId = movieRepository.insert(movie -> movie.withTitle(originalTitle));
 
         //when
-        movieRepository.find(movie -> movie.withId(movieId))
-                .update(movie -> movie.withTitle(newTitle))
+        movieRepository.update(movieId, 1, movie -> movie.withTitle(newTitle))
                 .ensureOneUpdated();
 
         //then
@@ -57,8 +57,7 @@ public class UpdateIntegrationTest extends BaseIntegrationTest {
         String movieId = movieRepository.insert(movie -> movie.withTitle(originalTitle));
 
         //when
-        movieRepository.find(movie -> movie.withId(movieId))
-                .update(movie -> movie.withTitle(newTitle))
+        movieRepository.update(movieId, 1, movie -> movie.withTitle(newTitle))
                 .ensureOneUpdated();
 
         //then
@@ -76,8 +75,7 @@ public class UpdateIntegrationTest extends BaseIntegrationTest {
         String movieId = movieRepository.insert(movie -> movie.withTitle(originalTitle));
 
         //when
-        movieRepository.find(movie -> movie.withId(movieId))
-                .update(movie -> movie.withTitle(newTitle))
+        movieRepository.update(movieId, 1, movie -> movie.withTitle(newTitle))
                 .ensureOneUpdated();
 
         //then
@@ -88,31 +86,26 @@ public class UpdateIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    public void shouldUpdateMultipleDocument() {
+    public void shouldSkipUpdateDocumentsWithPendingArchiveSet(){
         //given
         final String originalTitle = "Star Wars";
         final String newTitle = "Armageddon";
-        final String director = "Lucas";
-        String movieId = movieRepository.insert(movie -> movie.withTitle(originalTitle).withDirector(director));
-        String movieId2 = movieRepository.insert(movie -> movie.withTitle("Indiana Jones").withDirector(director));
+        final String movieId = movieRepository.insert(movie -> movie.withTitle(originalTitle));
+        collection.update(new BasicDBObject(DOC_ID, new ObjectId(movieId)), new BasicDBObject("$set", new BasicDBObject(PENDING_ARCHIVE, true)));
 
         //when
-        movieRepository.find(movie -> movie.withDirector(director))
-                .update(movie -> movie.withTitle(newTitle))
-                .ensureUpdated(2);
+        UpdateResult result = movieRepository.update(movieId, 1, movie -> movie.withTitle(newTitle));
 
         //then
-        Movie first = archiveRepo.find(movie -> movie.withId(movieId).withVersion(2)).first();
-        assertThat(first.getId()).isEqualTo(movieId);
-        assertThat(first.getVersion()).isEqualTo(2);
-        assertThat(first.getTitle()).isEqualTo(newTitle);
+        assertThat(result.getAffectedCount()).isEqualTo(0);
 
-        Movie second = archiveRepo.find(movie -> movie.withId(movieId2).withVersion(2)).first();
+        BasicDBObject notModified = (BasicDBObject) collection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)));
+        assertThat(notModified.getObjectId(DOC_ID)).isEqualTo(new ObjectId(movieId));
+        assertThat(notModified.getInt(VERSION)).isEqualTo(1);
+        assertThat(notModified.getString(Movie.TITLE)).isEqualTo(originalTitle);
+        assertThat(notModified.getBoolean(Movie.PENDING_ARCHIVE)).isEqualTo(true);
 
-        assertThat(second.getId()).isEqualTo(movieId2);
-        assertThat(second.getVersion()).isEqualTo(2);
-        assertThat(second.getTitle()).isEqualTo(newTitle);
+        BasicDBObject shouldNotExist = (BasicDBObject) collection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)).append(VERSION, 2));
+        assertThat(shouldNotExist).isNull();
     }
-
-
 }

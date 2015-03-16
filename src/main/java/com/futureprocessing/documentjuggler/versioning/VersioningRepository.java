@@ -1,23 +1,20 @@
 package com.futureprocessing.documentjuggler.versioning;
 
-import com.futureprocessing.documentjuggler.Repository;
 import com.futureprocessing.documentjuggler.insert.InsertConsumer;
 import com.futureprocessing.documentjuggler.insert.InsertProcessor;
-import com.futureprocessing.documentjuggler.query.QueriedDocuments;
 import com.futureprocessing.documentjuggler.query.QueryConsumer;
 import com.futureprocessing.documentjuggler.query.QueryProcessor;
+import com.futureprocessing.documentjuggler.query.ReadQueriedDocuments;
 import com.futureprocessing.documentjuggler.read.ReadProcessor;
-import com.futureprocessing.documentjuggler.update.UpdateProcessor;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCollection;
-import com.mongodb.WriteResult;
+import com.futureprocessing.documentjuggler.update.*;
+import com.mongodb.*;
 import org.bson.types.ObjectId;
 
 import java.util.Date;
 
 import static com.futureprocessing.documentjuggler.versioning.VersionedDocument.*;
 
-public class VersioningRepository<MODEL extends VersionedDocument<MODEL>> implements Repository<MODEL> {
+public class VersioningRepository<MODEL extends VersionedDocument<MODEL>> {
 
     private final DBCollection dbCollection;
     private final DBCollection archiveCollection;
@@ -39,17 +36,14 @@ public class VersioningRepository<MODEL extends VersionedDocument<MODEL>> implem
         this.updateProcessor = new UpdateProcessor<>(modelClass);
     }
 
-    @Override
-    public QueriedDocuments<MODEL> find(QueryConsumer<MODEL> consumer) {
+    public ReadQueriedDocuments<MODEL> find(QueryConsumer<MODEL> consumer) {
         return new VersionedQuerriedDocuments<>(dbCollection, archiveCollection, queryProcessor.process(consumer), readProcessor, updateProcessor);
     }
 
-    @Override
-    public QueriedDocuments<MODEL> find() {
+    public ReadQueriedDocuments<MODEL> find() {
         return new VersionedQuerriedDocuments<>(dbCollection, archiveCollection, null, readProcessor, updateProcessor);
     }
 
-    @Override
     public String insert(InsertConsumer<MODEL> consumer) {
         BasicDBObject document = insertProcessor.process(consumer);
 
@@ -76,5 +70,46 @@ public class VersioningRepository<MODEL extends VersionedDocument<MODEL>> implem
         BasicDBObject unset = new BasicDBObject("$unset", new BasicDBObject(PENDING_ARCHIVE, null));
         WriteResult updateResult = dbCollection.update(query, unset);
         //todo process exceptions (write results)
+    }
+
+    public UpdateResult update(final String docIdString, int version, UpdateConsumer<MODEL> consumer) {
+        final ObjectId docId = new ObjectId(docIdString);
+        final BasicDBObject updateOperation = updateProcessor.process(consumer);
+
+        RootUpdateBuilder updateBuilder = new RootUpdateBuilder(updateOperation);
+        updateBuilder.set(PENDING_ARCHIVE, true);
+        updateBuilder.inc(VERSION, 1);
+
+
+        final DBObject query = QueryBuilder.start(DOC_ID).is(docId)
+                .and(VERSION).is(version)
+                .and(PENDING_ARCHIVE).exists(false).get();
+
+        BasicDBObject modified = (BasicDBObject) dbCollection.findAndModify(query, null, null, false, updateBuilder.getDocument(), true, false);
+        if (modified == null) {
+            return new VersionedUpdateResult(0);
+        }
+
+        copyToArchive(modified);
+
+        WriteResult result = removeTransactionFromOriginals(docId);
+        return new BaseUpdateResult(result);
+
+    }
+
+    private WriteResult copyToArchive(BasicDBObject document) {
+        document.remove("_id");
+        document.remove(PENDING_ARCHIVE);
+
+        return archiveCollection.insert(document);
+    }
+
+    private WriteResult removeTransactionFromOriginals(ObjectId docId) {
+        BasicDBObject query = new BasicDBObject(DOC_ID, docId);
+
+        RootUpdateBuilder updateBuilder = new RootUpdateBuilder();
+        updateBuilder.unset(PENDING_ARCHIVE);
+
+        return dbCollection.update(query, updateBuilder.getDocument());
     }
 }
