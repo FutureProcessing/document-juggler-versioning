@@ -22,6 +22,9 @@ public interface VersionedDocument<MODEL extends VersionedDocument> {
     @DbField(VERSION)
     int getVersion();
 
+    @DbField(VERSION)
+    MODEL withVersion(int version);
+
     @DbField(DATE)
     Date getDate();
 }

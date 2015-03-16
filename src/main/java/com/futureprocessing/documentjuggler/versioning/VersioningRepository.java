@@ -35,12 +35,12 @@ public class VersioningRepository<MODEL extends VersionedDocument<MODEL>> implem
 
     @Override
     public QueriedDocuments<MODEL> find(QueryConsumer<MODEL> consumer) {
-        return new QueriedDocumentsImpl<>(dbCollection, queryProcessor.process(consumer), readProcessor, updateProcessor);
+        return new VersionedQuerriedDocuments<>(dbCollection, queryProcessor.process(consumer), readProcessor, updateProcessor);
     }
 
     @Override
     public QueriedDocuments<MODEL> find() {
-        return null;
+        return new VersionedQuerriedDocuments<>(dbCollection, null, readProcessor, updateProcessor);
     }
 
     @Override
