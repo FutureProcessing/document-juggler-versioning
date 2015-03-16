@@ -92,21 +92,26 @@ public class UpdateIntegrationTest extends BaseIntegrationTest {
         //given
         final String originalTitle = "Star Wars";
         final String newTitle = "Armageddon";
-        String movieId = movieRepository.insert(movie -> movie.withTitle(originalTitle).withDirector("Lucas"));
-        String movieId2 = movieRepository.insert(movie -> movie.withTitle("Indiana Jones").withDirector("Lucas"));
+        final String director = "Lucas";
+        String movieId = movieRepository.insert(movie -> movie.withTitle(originalTitle).withDirector(director));
+        String movieId2 = movieRepository.insert(movie -> movie.withTitle("Indiana Jones").withDirector(director));
 
         //when
-        movieRepository.find(movie -> movie.withDirector("Lucas"))
+        movieRepository.find(movie -> movie.withDirector(director))
                 .update(movie -> movie.withTitle(newTitle))
                 .ensureUpdated(2);
 
         //then
         Movie first = archiveRepo.find(movie -> movie.withId(movieId).withVersion(2)).first();
+        assertThat(first.getId()).isEqualTo(movieId);
+        assertThat(first.getVersion()).isEqualTo(2);
+        assertThat(first.getTitle()).isEqualTo(newTitle);
+
         Movie second = archiveRepo.find(movie -> movie.withId(movieId2).withVersion(2)).first();
 
-        assertThat(first.getId()).isEqualTo(new ObjectId(movieId));
-        assertThat(first.getVersion()).isEqualTo(1);
-        assertThat(first.getTitle()).isEqualTo(originalTitle);
+        assertThat(second.getId()).isEqualTo(movieId2);
+        assertThat(second.getVersion()).isEqualTo(2);
+        assertThat(second.getTitle()).isEqualTo(newTitle);
     }
 
 

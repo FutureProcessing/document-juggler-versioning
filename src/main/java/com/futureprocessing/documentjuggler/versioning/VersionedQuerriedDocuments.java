@@ -6,13 +6,10 @@ import com.futureprocessing.documentjuggler.update.RootUpdateBuilder;
 import com.futureprocessing.documentjuggler.update.UpdatConsumer;
 import com.futureprocessing.documentjuggler.update.UpdateProcessor;
 import com.futureprocessing.documentjuggler.update.UpdateResult;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
-import com.mongodb.WriteResult;
+import com.mongodb.*;
 import org.bson.types.ObjectId;
 
-import static com.futureprocessing.documentjuggler.versioning.VersionedDocument.PENDING_ARCHIVE;
+import static com.futureprocessing.documentjuggler.versioning.VersionedDocument.TRANSACTION;
 import static com.futureprocessing.documentjuggler.versioning.VersionedDocument.VERSION;
 
 public class VersionedQuerriedDocuments<MODEL extends VersionedDocument<MODEL>> extends QueriedDocumentsImpl<MODEL> {
@@ -22,33 +19,52 @@ public class VersionedQuerriedDocuments<MODEL extends VersionedDocument<MODEL>> 
     private final DBObject query;
     private final UpdateProcessor<MODEL> updateProcessor;
 
-    public VersionedQuerriedDocuments(DBCollection collection, DBCollection archiveCollection, DBObject query, ReadProcessor<MODEL> readProcessor, UpdateProcessor<MODEL> updateProcessor) {
+    public VersionedQuerriedDocuments(DBCollection collection, DBCollection archiveCollection, DBObject query,
+                                      ReadProcessor<MODEL> readProcessor, UpdateProcessor<MODEL> updateProcessor) {
         super(collection, query, readProcessor, updateProcessor);
         this.collection = collection;
-        this.archiveCollection = archiveCollection;
         this.query = query;
         this.updateProcessor = updateProcessor;
+        this.archiveCollection = archiveCollection;
     }
 
     @Override
     public UpdateResult update(UpdatConsumer<MODEL> consumer) {
-        BasicDBObject document = updateProcessor.process(consumer);
+        final BasicDBObject updateOperation = updateProcessor.process(consumer);
+        final ObjectId transactionId = new ObjectId();
 
-        RootUpdateBuilder updateBuilder = new RootUpdateBuilder(document);
-        updateBuilder.set(PENDING_ARCHIVE, true);
+        RootUpdateBuilder updateBuilder = new RootUpdateBuilder(updateOperation);
+        updateBuilder.set(TRANSACTION, transactionId);
         updateBuilder.inc(VERSION, 1);
+        collection.update(query, updateBuilder.getDocument(), false, true);
 
-        BasicDBObject modified = (BasicDBObject) collection.findAndModify(query, null, null, false, updateBuilder.getDocument(), true, false);
-        final ObjectId originalId = modified.getObjectId("_id");
-        modified.remove("_id");
-        modified.remove(PENDING_ARCHIVE);
+        copyToArchive(transactionId);
 
-        archiveCollection.insert(modified);
-
-        updateBuilder = new RootUpdateBuilder();
-        updateBuilder.unset(PENDING_ARCHIVE);
-
-        WriteResult result = collection.update(new BasicDBObject("_id", originalId), updateBuilder.getDocument());
+        WriteResult result = removeTransactionFromOriginals(transactionId);
         return new UpdateResult(result);
+    }
+
+    private BulkWriteResult copyToArchive(ObjectId transactionId) {
+        BulkWriteOperation bulkWriteOperation = archiveCollection.initializeUnorderedBulkOperation();
+        try (DBCursor cursor = collection.find(new BasicDBObject(TRANSACTION, transactionId))) {
+            while (cursor.hasNext()) {
+                BasicDBObject document = (BasicDBObject) cursor.next();
+                document.remove("_id");
+                document.remove(TRANSACTION);
+                bulkWriteOperation.insert(document);
+            }
+        }
+
+        BulkWriteResult result = bulkWriteOperation.execute();
+        return result;
+    }
+
+    private WriteResult removeTransactionFromOriginals(ObjectId transactionId) {
+        BasicDBObject query = new BasicDBObject(TRANSACTION, transactionId);
+
+        RootUpdateBuilder updateBuilder = new RootUpdateBuilder();
+        updateBuilder.unset(TRANSACTION);
+
+        return collection.update(query, updateBuilder.getDocument(), false, true);
     }
 }
