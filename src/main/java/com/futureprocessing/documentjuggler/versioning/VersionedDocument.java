@@ -10,6 +10,7 @@ public interface VersionedDocument<MODEL extends VersionedDocument> {
     static final String DOC_ID = "_docId";
     static final String VERSION = "_v";
     static final String DATE = "_date";
+    static final String PENDING_ARCHIVE = "_pending_archive";
 
     @ObjectId
     @DbField(DOC_ID)

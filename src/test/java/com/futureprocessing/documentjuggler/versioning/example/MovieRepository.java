@@ -7,6 +7,6 @@ import com.mongodb.DB;
 public class MovieRepository extends VersioningRepository<Movie> {
 
     public MovieRepository(DB db) {
-        super(db.getCollection(Movie.COLLECTION), Movie.class);
+        super(db.getCollection(Movie.COLLECTION), db.getCollection(Movie.COLLECTION + "_archive"), Movie.class);
     }
 }
