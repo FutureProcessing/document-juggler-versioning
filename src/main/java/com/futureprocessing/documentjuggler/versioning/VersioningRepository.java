@@ -98,10 +98,14 @@ public class VersioningRepository<MODEL extends VersionedDocument<MODEL>> {
     }
 
     private WriteResult copyToArchive(BasicDBObject document) {
+
+        DBObject docIdVersionQuery = QueryBuilder.start(DOC_ID).is(document.getObjectId(DOC_ID))
+                .and(VERSION).is(document.getInt(VERSION)).get();
+
         document.remove("_id");
         document.remove(PENDING_ARCHIVE);
 
-        return archiveCollection.insert(document);
+        return archiveCollection.update(docIdVersionQuery, document, true, false);
     }
 
     private WriteResult unsetPending(ObjectId docId) {
