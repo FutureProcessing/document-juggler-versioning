@@ -87,7 +87,15 @@ public class VersioningRepository<MODEL extends VersionedDocument<MODEL>> {
 
         BasicDBObject modified = (BasicDBObject) dbCollection.findAndModify(query, null, null, false, updateBuilder.getDocument(), true, false);
         if (modified == null) {
-            return new VersionedUpdateResult(0);
+
+            query.removeField(PENDING_ARCHIVE);
+            BasicDBObject foundPending = (BasicDBObject) dbCollection.findOne(query);
+            if (foundPending == null){
+                return new VersionedUpdateResult(0);
+            }
+            copyToArchive(foundPending);
+            removeTransactionFromOriginals(docId);
+            return update(docIdString, version, consumer);
         }
 
         copyToArchive(modified);
