@@ -9,7 +9,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static com.futureprocessing.documentjuggler.versioning.VersionedDocument.*;
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.futureprocessing.documentjuggler.versioning.assertions.CustomAssertions.assertThat;
+
 
 public class InsertIntegrationTest extends BaseIntegrationTest {
 
@@ -35,7 +36,7 @@ public class InsertIntegrationTest extends BaseIntegrationTest {
         BasicDBObject found = (BasicDBObject) collection.findOne();
 
         assertThat(found.getObjectId(DOC_ID).toHexString()).isEqualTo(movieId);
-        assertThat(found.get(VERSION)).isEqualTo(1);
+        assertThat(found).hasVersion(1);
         assertThat(found.getDate(DATE)).isNotNull();
 
         assertThat(found.getString(Movie.TITLE)).isEqualTo("Star Wars");
@@ -52,7 +53,7 @@ public class InsertIntegrationTest extends BaseIntegrationTest {
         BasicDBObject found = (BasicDBObject) collection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)));
 
         assertThat(found.getObjectId(DOC_ID).toHexString()).isEqualTo(movieId);
-        assertThat(found.get(VERSION)).isEqualTo(1);
+        assertThat(found).hasVersion(1);
         assertThat(found.getDate(DATE)).isNotNull();
 
         assertThat(found.getString(Movie.TITLE)).isEqualTo("Star Wars");
@@ -69,13 +70,13 @@ public class InsertIntegrationTest extends BaseIntegrationTest {
         BasicDBObject found = (BasicDBObject) collection_archive.findOne();
 
         assertThat(found.getObjectId(DOC_ID).toHexString()).isEqualTo(movieId);
-        assertThat(found.get(VERSION)).isEqualTo(1);
+        assertThat(found).hasVersion(1);
         assertThat(found.getDate(DATE)).isNotNull();
 
         assertThat(found.getString(Movie.TITLE)).isEqualTo("Star Wars");
     }
 
-@Test
+    @Test
     public void shouldInsertOneDocumentIntoArchiveWithDocId() {
         //given
 
@@ -86,12 +87,11 @@ public class InsertIntegrationTest extends BaseIntegrationTest {
         BasicDBObject found = (BasicDBObject) collection_archive.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)));
 
         assertThat(found.getObjectId(DOC_ID).toHexString()).isEqualTo(movieId);
-        assertThat(found.get(VERSION)).isEqualTo(1);
+        assertThat(found).hasVersion(1);
         assertThat(found.getDate(DATE)).isNotNull();
 
         assertThat(found.getString(Movie.TITLE)).isEqualTo("Star Wars");
     }
-
 
 
 }

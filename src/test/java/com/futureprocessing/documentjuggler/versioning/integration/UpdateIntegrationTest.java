@@ -16,8 +16,9 @@ import org.mockito.BDDMockito;
 import org.mockito.Mockito;
 
 import static com.futureprocessing.documentjuggler.versioning.VersionedDocument.*;
+import static com.futureprocessing.documentjuggler.versioning.assertions.CustomAssertions.assertThat;
 import static com.futureprocessing.documentjuggler.versioning.example.model.Movie.TITLE;
-import static org.assertj.core.api.Assertions.assertThat;
+
 import static org.assertj.core.api.Fail.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
@@ -75,7 +76,7 @@ public class UpdateIntegrationTest extends BaseIntegrationTest {
         //then
         BasicDBObject second = (BasicDBObject) archiveCollection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)).append(VERSION, 2));
         assertThat(second.getObjectId(DOC_ID)).isEqualTo(new ObjectId(movieId));
-        assertThat(second.getInt(VERSION)).isEqualTo(2);
+        assertThat(second).hasVersion(2);
         assertThat(second.getString(TITLE)).isEqualTo(newTitle);
     }
 
@@ -93,7 +94,7 @@ public class UpdateIntegrationTest extends BaseIntegrationTest {
         //then
         BasicDBObject first = (BasicDBObject) archiveCollection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)).append(VERSION, 1));
         assertThat(first.getObjectId(DOC_ID)).isEqualTo(new ObjectId(movieId));
-        assertThat(first.getInt(VERSION)).isEqualTo(1);
+        assertThat(first).hasVersion(1);
         assertThat(first.getString(TITLE)).isEqualTo(originalTitle);
     }
 
@@ -104,7 +105,7 @@ public class UpdateIntegrationTest extends BaseIntegrationTest {
 
         //then
         BasicDBObject pendingArchiveMovie = (BasicDBObject) collection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)));
-        assertThat(pendingArchiveMovie.getInt(VERSION)).isEqualTo(2);
+        assertThat(pendingArchiveMovie).hasVersion(2);
         assertThat(pendingArchiveMovie.getString(TITLE)).isEqualTo(newTitle);
         assertThat(pendingArchiveMovie.getBoolean(PENDING_ARCHIVE)).isTrue();
     }
@@ -123,21 +124,21 @@ public class UpdateIntegrationTest extends BaseIntegrationTest {
         //assert document Is Modified In Main Collection
         BasicDBObject currentMovie = (BasicDBObject) collection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)));
         assertThat(currentMovie.getObjectId(DOC_ID)).isEqualTo(new ObjectId(movieId));
-        assertThat(currentMovie.getInt(VERSION)).isEqualTo(3);
+        assertThat(currentMovie).hasVersion(3);
         assertThat(currentMovie.getString(TITLE)).isEqualTo(anotherNewTitle);
         assertThat(currentMovie.get(Movie.PENDING_ARCHIVE)).isNull();
 
         //asssert that in archive is previous version archived
         BasicDBObject previousArchived = (BasicDBObject) archiveCollection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)).append(VERSION, 2));
         assertThat(previousArchived.getObjectId(DOC_ID)).isEqualTo(new ObjectId(movieId));
-        assertThat(previousArchived.getInt(VERSION)).isEqualTo(2);
+        assertThat(previousArchived).hasVersion(2);
         assertThat(previousArchived.getString(TITLE)).isEqualTo(newTitle);
         assertThat(previousArchived.get(Movie.PENDING_ARCHIVE)).isNull();
 
         //asssert that in archive is current version archived
         BasicDBObject currentArchived = (BasicDBObject) archiveCollection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)).append(VERSION, 3));
         assertThat(currentArchived.getObjectId(DOC_ID)).isEqualTo(new ObjectId(movieId));
-        assertThat(currentArchived.getInt(VERSION)).isEqualTo(3);
+        assertThat(currentArchived).hasVersion(3);
         assertThat(currentArchived.getString(TITLE)).isEqualTo(anotherNewTitle);
         assertThat(currentArchived.get(Movie.PENDING_ARCHIVE)).isNull();
 
@@ -170,13 +171,13 @@ public class UpdateIntegrationTest extends BaseIntegrationTest {
         //then
         //assert that in main collection is updated document with pending archive flag
         BasicDBObject pendingArchiveMovie = (BasicDBObject) collection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)));
-        assertThat(pendingArchiveMovie.getInt(VERSION)).isEqualTo(2);
+        assertThat(pendingArchiveMovie).hasVersion(2);
         assertThat(pendingArchiveMovie.getString(TITLE)).isEqualTo(newTitle);
         assertThat(pendingArchiveMovie.getBoolean(PENDING_ARCHIVE)).isTrue();
 
         //assert that in archive is archived new version
         BasicDBObject archivedNewVersion = (BasicDBObject) archiveCollection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)).append(VERSION, 2));
-        assertThat(archivedNewVersion.getInt(VERSION)).isEqualTo(2);
+        assertThat(archivedNewVersion).hasVersion(2);
         assertThat(archivedNewVersion.getString(TITLE)).isEqualTo(newTitle);
         assertThat(archivedNewVersion.get(PENDING_ARCHIVE)).isNull();
     }
@@ -211,21 +212,21 @@ public class UpdateIntegrationTest extends BaseIntegrationTest {
         //assert document Is Modified In Main Collection
         BasicDBObject currentMovie = (BasicDBObject) collection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)));
         assertThat(currentMovie.getObjectId(DOC_ID)).isEqualTo(new ObjectId(movieId));
-        assertThat(currentMovie.getInt(VERSION)).isEqualTo(3);
+        assertThat(currentMovie).hasVersion(3);
         assertThat(currentMovie.getString(TITLE)).isEqualTo(anotherNewTitle);
         assertThat(currentMovie.get(Movie.PENDING_ARCHIVE)).isNull();
 
         //asssert that in archive is previous version archived
         BasicDBObject previousArchived = (BasicDBObject) archiveCollection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)).append(VERSION, 2));
         assertThat(previousArchived.getObjectId(DOC_ID)).isEqualTo(new ObjectId(movieId));
-        assertThat(previousArchived.getInt(VERSION)).isEqualTo(2);
+        assertThat(previousArchived).hasVersion(2);
         assertThat(previousArchived.getString(TITLE)).isEqualTo(newTitle);
         assertThat(previousArchived.get(Movie.PENDING_ARCHIVE)).isNull();
 
         //asssert that in archive is current version archived
         BasicDBObject currentArchived = (BasicDBObject) archiveCollection.findOne(new BasicDBObject(DOC_ID, new ObjectId(movieId)).append(VERSION, 3));
         assertThat(currentArchived.getObjectId(DOC_ID)).isEqualTo(new ObjectId(movieId));
-        assertThat(currentArchived.getInt(VERSION)).isEqualTo(3);
+        assertThat(currentArchived).hasVersion(3);
         assertThat(currentArchived.getString(TITLE)).isEqualTo(anotherNewTitle);
         assertThat(currentArchived.get(Movie.PENDING_ARCHIVE)).isNull();
 
