@@ -4,6 +4,7 @@ import com.futureprocessing.documentjuggler.update.UpdateResult;
 import com.futureprocessing.documentjuggler.versioning.VersioningRepository;
 import com.futureprocessing.documentjuggler.versioning.example.MovieRepository;
 import com.futureprocessing.documentjuggler.versioning.example.model.Movie;
+import com.futureprocessing.documentjuggler.versioning.exception.InvalidVersionException;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
@@ -232,4 +233,38 @@ public class UpdateIntegrationTest extends BaseIntegrationTest {
             assertThat(dbObjects.length()).isEqualTo(1);
         }
     }
+
+    @Test
+    public void shouldNotUpdateDocumentWithNotCurrent(){
+        //given
+        final String movieId = movieRepository.insert(movie -> movie.withTitle(originalTitle));
+        movieRepository.update(movieId, 1, movie -> movie.withTitle(newTitle));
+
+        //when
+        movieRepository.update(movieId, 1, movie -> movie.withTitle(anotherNewTitle));
+
+        //then
+        Movie movieNotModified = movieRepository.find(movie -> movie.withId(movieId)).first();
+
+        assertThat(movieNotModified.getVersion()).isEqualTo(2);
+        assertThat(movieNotModified.getTitle()).isEqualTo(newTitle);
+    }
+
+    @Test
+    public void shouldThrowExceptionWhenEnsureUpdatedRequestedOnDocumentWithNotCurrent(){
+        //given
+        final String movieId = movieRepository.insert(movie -> movie.withTitle(originalTitle));
+        movieRepository.update(movieId, 1, movie -> movie.withTitle(newTitle));
+
+        //when
+
+        try {
+            movieRepository.update(movieId, 1, movie -> movie.withTitle(anotherNewTitle)).ensureOneUpdated();
+        } catch (Exception e) {
+            assertThat(e).isInstanceOf(InvalidVersionException.class);
+            return;
+        }
+        fail("Should have thrown exception");
+    }
+
 }

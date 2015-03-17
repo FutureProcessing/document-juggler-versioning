@@ -83,7 +83,7 @@ public class VersioningRepository<MODEL extends VersionedDocument<MODEL>> {
             query.removeField(PENDING_ARCHIVE);
             BasicDBObject foundPending = (BasicDBObject) dbCollection.findOne(query);
             if (foundPending == null){
-                return new VersionedUpdateResult(0);
+                return new InvalidVersionUpdateResult();
             }
             copyToArchive(foundPending);
             unsetPending(docId);
