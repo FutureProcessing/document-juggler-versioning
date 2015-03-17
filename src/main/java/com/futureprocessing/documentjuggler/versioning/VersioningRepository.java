@@ -64,14 +64,6 @@ public class VersioningRepository<MODEL extends VersionedDocument<MODEL>> {
         return docId.toHexString();
     }
 
-    private void unsetPending(ObjectId docId) {
-
-        BasicDBObject query = new BasicDBObject(DOC_ID, docId);
-        BasicDBObject unset = new BasicDBObject("$unset", new BasicDBObject(PENDING_ARCHIVE, null));
-        WriteResult updateResult = dbCollection.update(query, unset);
-        //todo process exceptions (write results)
-    }
-
     public UpdateResult update(final String docIdString, int version, UpdateConsumer<MODEL> consumer) {
         final ObjectId docId = new ObjectId(docIdString);
         final BasicDBObject updateOperation = updateProcessor.process(consumer);
@@ -94,13 +86,13 @@ public class VersioningRepository<MODEL extends VersionedDocument<MODEL>> {
                 return new VersionedUpdateResult(0);
             }
             copyToArchive(foundPending);
-            removeTransactionFromOriginals(docId);
+            unsetPending(docId);
             return update(docIdString, version, consumer);
         }
 
         copyToArchive(modified);
 
-        WriteResult result = removeTransactionFromOriginals(docId);
+        WriteResult result = unsetPending(docId);
         return new BaseUpdateResult(result);
 
     }
@@ -112,7 +104,7 @@ public class VersioningRepository<MODEL extends VersionedDocument<MODEL>> {
         return archiveCollection.insert(document);
     }
 
-    private WriteResult removeTransactionFromOriginals(ObjectId docId) {
+    private WriteResult unsetPending(ObjectId docId) {
         BasicDBObject query = new BasicDBObject(DOC_ID, docId);
 
         RootUpdateBuilder updateBuilder = new RootUpdateBuilder();
