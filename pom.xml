@@ -65,6 +65,9 @@
 
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <skipJavadoc>false</skipJavadoc>
+        <skipSources>false</skipSources>
     </properties>
 
 
@@ -180,6 +183,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
+                <configuration>
+                    <skipSource>${skipSources}</skipSource>
+                </configuration>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -192,6 +198,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
+                <configuration>
+                    <skip>${skipJavadoc}</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
