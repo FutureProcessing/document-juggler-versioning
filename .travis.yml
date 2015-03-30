@@ -4,5 +4,6 @@ env:
   global:
     - secure: "QXKaDEjVW/HAzXmkl/EIcpXgVaCPQzAgLspb+MjCwOxPUQ08PTgtj+6yWmiyik/uXXn2PPITSVJoa4cc6HGV0sh81+1rykansnvw9uJTXfDMZet8+DB+rwxXmMt2E2KHX/EJKFu/0ze6XqOhYy51Pzwbg3nMGIskm2uV2v542P4="
     - secure: "UTh13y9258dsVbv+gprZdUo/FmXf/zF6xPHNlHYASysVtWpgMar7XbtPNaIF7zjwhkU+0BCRlL8XNzf6Xdo9d/MvDS/bpVuf5iIMs/ba1FadgnuqR66sqyegxcGVXH3Yq+qDUYKi7mVvswuZLr79ANm3n1lCRI2mhdYF9GipZrk="
+before_script: mvn install -DskipTests=true -DskipJavadoc=true -DskipSources=true
 script: mvn test verify
 after_success: ./deploy-snapshot.sh
