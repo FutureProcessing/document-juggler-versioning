@@ -9,6 +9,55 @@
     <groupId>com.future-processing.document-juggler</groupId>
     <version>0.1.0-SNAPSHOT</version>
 
+    <name>Document Juggler Versioning</name>
+    <description>Document Juggler extension providing document versioning repository</description>
+    <url>https://github.com/FutureProcessing/document-juggler-versioning</url>
+
+    <developers>
+        <developer>
+            <name>Bartosz Niziołek</name>
+            <email>exys666@gmail.com</email>
+            <organization>Future Processing Sp. z o.o.</organization>
+            <organizationUrl>http://www.future-processing.com/</organizationUrl>
+        </developer>
+        <developer>
+            <name>Szymon Sobocik</name>
+            <email>szymonsobocik@gmail.com</email>
+            <organization>Future Processing Sp. z o.o.</organization>
+            <organizationUrl>http://www.future-processing.com/</organizationUrl>
+        </developer>
+        <developer>
+            <name>Paweł Ćmiel</name>
+            <email>pcmiel@future-processing.com</email>
+            <organization>Future Processing Sp. z o.o.</organization>
+            <organizationUrl>http://www.future-processing.com/</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git@github.com:FutureProcessing/document-juggler-versioning.git</connection>
+        <developerConnection>scm:git:git@github.com:FutureProcessing/document-juggler-versioning.git</developerConnection>
+        <url>git@github.com:FutureProcessing/document-juggler-versioning.git</url>
+    </scm>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/groups/public/</url>
+        </repository>
+    </repositories>
+
     <properties>
         <java.version>1.8</java.version>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -23,7 +72,7 @@
         <dependency>
             <groupId>com.future-processing.document-juggler</groupId>
             <artifactId>document-juggler</artifactId>
-            <version>0.2.0-SNAPSHOT</version>
+            <version>0.3.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -123,6 +172,31 @@
                         <id>stop</id>
                         <goals>
                             <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
                         </goals>
                     </execution>
                 </executions>
