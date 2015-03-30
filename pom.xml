@@ -36,8 +36,7 @@
 
     <scm>
         <connection>scm:git:git@github.com:FutureProcessing/document-juggler-versioning.git</connection>
-        <developerConnection>scm:git:git@github.com:FutureProcessing/document-juggler-versioning.git
-        </developerConnection>
+        <developerConnection>scm:git:git@github.com:FutureProcessing/document-juggler-versioning.git</developerConnection>
         <url>git@github.com:FutureProcessing/document-juggler-versioning.git</url>
     </scm>
 
@@ -69,7 +68,6 @@
 
         <skipJavadoc>false</skipJavadoc>
         <skipSources>false</skipSources>
-        <mongo.port>27017</mongo.port>
     </properties>
 
 
@@ -144,13 +142,42 @@
                     <systemProperties>
                         <property>
                             <name>mongodb.port</name>
-                            <value>${mongo.port}</value>
+                            <value>37017</value>
                         </property>
                     </systemProperties>
                     <includes>
                         <include>**/*IntegrationTest.java</include>
                     </includes>
                 </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>com.github.joelittlejohn.embedmongo</groupId>
+                <artifactId>embedmongo-maven-plugin</artifactId>
+                <version>0.1.10</version>
+                <executions>
+                    <execution>
+                        <id>start</id>
+                        <goals>
+                            <goal>start</goal>
+                        </goals>
+                        <configuration>
+                            <port>37017</port>
+                            <version>2.6.1</version>
+                            <databaseDirectory>${project.build.directory}/mongodb</databaseDirectory>
+                            <logging>file</logging>
+                            <logFile>${project.build.directory}/mongo.log</logFile>
+                            <logFileEncoding>utf-8</logFileEncoding>
+                            <bindIp>127.0.0.1</bindIp>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>stop</id>
+                        <goals>
+                            <goal>stop</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -185,49 +212,5 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>embedded-mongo</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <mongo.port>37017</mongo.port>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>com.github.joelittlejohn.embedmongo</groupId>
-                        <artifactId>embedmongo-maven-plugin</artifactId>
-                        <version>0.1.10</version>
-                        <executions>
-                            <execution>
-                                <id>start</id>
-                                <goals>
-                                    <goal>start</goal>
-                                </goals>
-                                <configuration>
-                                    <port>37017</port>
-                                    <version>2.6.1</version>
-                                    <databaseDirectory>${project.build.directory}/mongodb</databaseDirectory>
-                                    <logging>file</logging>
-                                    <logFile>${project.build.directory}/mongo.log</logFile>
-                                    <logFileEncoding>utf-8</logFileEncoding>
-                                    <bindIp>127.0.0.1</bindIp>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>stop</id>
-                                <goals>
-                                    <goal>stop</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
 </project>
